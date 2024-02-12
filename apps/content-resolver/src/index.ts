@@ -1,14 +1,25 @@
-import fastify from 'fastify'
-import proxy from '@fastify/http-proxy'
+import proxy from '@fastify/http-proxy';
+import fastify from 'fastify';
 
 const PORT = process.env.PORT || 8000
-const PROXY_BASE_PATH = 'https://vercel-clone-test.s3.ap-south-1.amazonaws.com/hello_builder/'
+const PROXY_BASE_PATH = 'https://vercel-clone-test.s3.ap-south-1.amazonaws.com/'
 
 const app = fastify();
 
 app.register(proxy, {
     upstream: PROXY_BASE_PATH,
     prefix: '/',
+    preHandler: (request, reply, next) => {
+        const hostname = request.hostname;
+        const subdomain = hostname.split('.')[0];
+
+        let url = request.raw.url
+        if (url == '/') {
+            url += 'index.html'
+        }
+        request.raw.url = `${subdomain}${url}`
+        next()
+    }
 });
 
 app.listen({ port: 8000 }, (err, address) => {
