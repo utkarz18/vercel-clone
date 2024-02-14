@@ -1,7 +1,7 @@
 import proxy from '@fastify/http-proxy';
 import fastify from 'fastify';
 
-const PORT = process.env.PORT || 8000
+const PORT = process.env.PORT || 9000
 const PROXY_BASE_PATH = 'https://vercel-clone-test.s3.ap-south-1.amazonaws.com/'
 
 const app = fastify();
@@ -22,7 +22,7 @@ app.register(proxy, {
     }
 });
 
-app.listen({ port: 8000 }, (err, address) => {
+app.listen({ port: +PORT }, (err, address) => {
     if (err) throw err
     console.log(`Reverse Proxy Running on port ${PORT}`);
 });

@@ -4,8 +4,8 @@ import path from 'path'
 import mime from 'mime-types'
 
 const options: S3ClientConfig = {
-    region: process.env.REGION!,
-    endpoint: `https://s3.${process.env.REGION!}.amazonaws.com`,
+    region: process.env.REGION,
+    endpoint: `https://s3.${process.env.REGION}.amazonaws.com`,
     credentials: {
         accessKeyId: process.env.ACCESS_KEY_ID!,
         secretAccessKey: process.env.SECRET_ACCESS_KEY!,

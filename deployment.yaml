@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vercel-clone-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vercel
+  template:
+    metadata:
+      labels:
+        app: vercel
+    spec:
+      containers:
+        - name: vercel-redis
+          image: redis:latest
+          ports:
+            - containerPort: 6379
+        - name: vercel-api
+          image: utkarz18/vercel-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+          - configMapRef:
+              name: vercel-api-env
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vercel-redis-service
+spec:
+  type: ClusterIP
+  selector:
+    app: vercel
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379

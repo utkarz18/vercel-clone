@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: git-repo-builder-pod-
+spec:
+  restartPolicy: Never
+  containers:
+  - name: git-repo-builder
+    image: utkarz18/git-repo-builder:latest
+    terminationGracePeriodSeconds: 30
