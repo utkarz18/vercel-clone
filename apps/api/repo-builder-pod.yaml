@@ -6,5 +6,6 @@ spec:
   restartPolicy: Never
   containers:
   - name: git-repo-builder
-    image: utkarz18/git-repo-builder:latest
+    image: git-repo-builder:latest
+    imagePullPolicy: IfNotPresent
     terminationGracePeriodSeconds: 30

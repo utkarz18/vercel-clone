@@ -12,15 +12,22 @@ spec:
       labels:
         app: vercel
     spec:
+      containers:
+        - name: vercel-redis
+          image: redis:latest
+          ports:
+            - containerPort: 6379
         - name: vercel-content-resolver
-          image: utkarz18/vercel-content-resolver:latest
+          image: vercel-content-resolver:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
           env:
           - name: PORT
             value: "9000"
         - name: vercel-api
-          image: utkarz18/vercel-api:latest
+          image: vercel-api:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           env:
@@ -39,6 +46,9 @@ spec:
   selector:
     app: vercel
   ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
     - name: api
       port: 8000
       targetPort: 8000

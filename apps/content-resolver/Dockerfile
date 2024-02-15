@@ -5,12 +5,8 @@ WORKDIR /app
 COPY package.json .
 RUN npm install
 
-RUN mkdir -p /root/.kube
-COPY config /root/.kube/config
-
 COPY tsconfig.json .
 COPY src ./src
-COPY repo-builder-pod.yaml .
 
 RUN npm run build
 
