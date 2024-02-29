@@ -1,16 +1,17 @@
-import { S3Client, PutObjectCommand, PutObjectCommandInput, S3ClientConfig } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, S3ClientConfig } from "@aws-sdk/client-s3";
 import fs from 'fs'
 import path from 'path'
 import mime from 'mime-types'
 
 const options: S3ClientConfig = {
     region: process.env.REGION,
-    endpoint: `https://s3.${process.env.REGION}.amazonaws.com`,
-    credentials: {
+    endpoint: `https://s3.${process.env.REGION}.amazonaws.com`
+}
+if (process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY) {
+    options.credentials = {
         accessKeyId: process.env.ACCESS_KEY_ID!,
-        secretAccessKey: process.env.SECRET_ACCESS_KEY!,
-        sessionToken: process.env.SESSION_TOKEN ? process.env.SESSION_TOKEN : ''
-    }
+        secretAccessKey: process.env.SECRET_ACCESS_KEY!
+    };
 }
 
 export const uploadDirectoryToS3 = async (directoryPath: string, bucketName: string, prefix: string) => {

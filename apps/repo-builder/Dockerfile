@@ -13,10 +13,10 @@ WORKDIR /home/app
 COPY package.json .
 RUN npm install
 
-COPY src ./src
-COPY main.sh .
 COPY tsconfig.json .
+COPY src ./src
 RUN npm run build
+COPY main.sh .
 
 RUN chmod +x main.sh
 RUN chmod +x dist/index.js

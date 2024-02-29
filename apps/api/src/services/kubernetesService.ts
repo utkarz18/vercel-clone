@@ -12,8 +12,9 @@ export default class KubernetesService {
         this.podName = ''
     }
 
-    triggerGitRepoBuilderPod = async (repoUrl: string, projectSlug: string, namespace: string = 'default') => {
-        const podYaml = fs.readFileSync('repo-builder-pod.yaml', 'utf-8');
+    triggerGitRepoBuilderPod = async (repoUrl: string, projectSlug: string, namespace: string) => {
+        const podFileName = process.env.ENV === 'DEV' ? 'git-repo-builder-pod-dev.yaml' : 'git-repo-builder-pod.yaml'
+        const podYaml = fs.readFileSync(podFileName, 'utf-8');
         const pod = YAML.parse(podYaml);
 
         this.podName = pod.metadata.name += projectSlug
@@ -25,14 +26,14 @@ export default class KubernetesService {
         console.log('Pod created:', response.body.metadata?.name);
     }
 
-    cleanUpGitRepoBuilderPod = async (projectSlug: string, namespace: string = 'default') => {
+    cleanUpGitRepoBuilderPod = async (namespace: string) => {
         const k8sApi = this.kc.makeApiClient(k8s.CoreV1Api);
-        const deletePodresponse = await k8sApi.deleteNamespacedPod(this.podName, namespace);
+        await k8sApi.deleteNamespacedPod(this.podName, namespace);
         console.log(`${this.podName} Pod deleted successfully.`);
     }
 
     private getEnvironmentVariables = (repoUrl: string, projectSlug: string) => {
-        return [
+        let envVariables = [
             {
                 name: 'GIT_REPOSITORY_URL',
                 value: repoUrl
@@ -46,21 +47,27 @@ export default class KubernetesService {
                 value: process.env.REGION
             },
             {
-                name: 'ACCESS_KEY_ID',
-                value: process.env.ACCESS_KEY_ID
-            },
-            {
-                name: 'SECRET_ACCESS_KEY',
-                value: process.env.SECRET_ACCESS_KEY
-            },
-            {
-                name: 'SESSION_TOKEN',
-                value: process.env.SESSION_TOKEN
-            },
-            {
                 name: 'REDIS_URL',
                 value: process.env.REDIS_URL
             },
+            {
+                name: 'BUCKET_NAME',
+                value: process.env.BUCKET_NAME
+            }
         ];
+        
+        if (process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY) {
+            envVariables = envVariables.concat([
+                {
+                    name: 'ACCESS_KEY_ID',
+                    value: process.env.ACCESS_KEY_ID
+                },
+                {
+                    name: 'SECRET_ACCESS_KEY',
+                    value: process.env.SECRET_ACCESS_KEY
+                }
+            ])
+        }
+        return envVariables;
     }
 }

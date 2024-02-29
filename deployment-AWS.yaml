@@ -1,0 +1,162 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vercel-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: vercel-app
+  name: vercel-api-env
+data:
+  CONTENT_RESOLVER_URL: your-hostname-attached-to-alb
+  REDIS_URL: vercel-redis-service.vercel-app:6379
+  REGION: your-aws-region
+  NAMESPACE: vercel-app
+  BUCKET_NAME: your-bucket-name
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: vercel-app
+  name: eks-pod-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: eks-pod-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: eks-pod-manager-role-binding
+subjects:
+- kind: ServiceAccount
+  name: eks-pod-sa
+  namespace: vercel-app
+roleRef:
+  kind: ClusterRole
+  name: eks-pod-manager-role
+  apiGroup: rbac.authorization.k8s.ioxw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: vercel-app
+  name: vercel-api-service
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: vercel
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: vercel-app
+  name: vercel-content-resolver-service
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: vercel
+  ports:
+    - port: 80
+      targetPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: vercel-app
+  name: vercel-redis-service
+spec:
+  selector:
+    app.kubernetes.io/name: vercel
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: vercel-app
+  name: vercel-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vercel
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vercel
+    spec:
+      serviceAccountName: eks-pod-sa
+      containers:
+        - name: vercel-redis
+          image: redis:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 6379
+        - name: vercel-content-resolver
+          image: utkarz18/vercel-content-resolver:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+          env:
+          - name: PORT
+            value: "9000"
+          - name: BUCKET_NAME
+            value: "your-bucket-name"
+        - name: vercel-api
+          image: utkarz18/vercel-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+          - name: PORT
+            value: "8000"
+          envFrom:
+          - configMapRef:
+              name: vercel-api-env
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vercel-app-ingress
+  namespace: vercel-app
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: vercel-api-service
+                port:
+                  number: 80                        
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vercel-content-resolver-service
+                port:
+                  number: 80

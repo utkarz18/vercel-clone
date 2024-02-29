@@ -3,9 +3,9 @@ kind: Pod
 metadata:
   name: git-repo-builder-pod-
 spec:
+  serviceAccountName: s3-write-sa
   restartPolicy: Never
   containers:
-  - name: git-repo-builder
+  - name: git-repo-builder-
     image: git-repo-builder:latest
-    imagePullPolicy: IfNotPresent
     terminationGracePeriodSeconds: 30

@@ -28,7 +28,7 @@ const init = () => {
 
     buildProcess?.on('close', async() => {
         publishLog('Build Completed!')
-        const bucketName = process.env.S3_BUCKET_NAME || 'vercel-clone-test';
+        const bucketName = process.env.BUCKET_NAME!;
         const buildDirectory = path.join(gitRepoDirectory, 'dist')
         await uploadDirectoryToS3(buildDirectory, bucketName, buildId)
         publishLog('Task Completed')
